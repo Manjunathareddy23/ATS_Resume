@@ -1,9 +1,10 @@
 streamlit
 numpy
 pdfplumber
-spacy
+spacy==3.0.0 
 scikit-learn
 pipeline
 cosine_similarity
 nltk
 stopwords
+en_core_web_sm
