@@ -1,0 +1,9 @@
+streamlit
+numpy
+pdfplumber
+spacy
+scikit-learn
+pipeline
+cosine_similarity
+nltk
+stopwords
