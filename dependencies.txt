@@ -1,9 +1,0 @@
-import spacy
-nlp = spacy.load("en_core_web_sm")
-import streamlit as st
-import spacy
-
-nlp = spacy.load("en_core_web_sm")
-
-st.title("Spacy Test")
-st.write("Spacy is working!")
