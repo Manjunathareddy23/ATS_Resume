@@ -1,12 +1,7 @@
 streamlit
-numpy
 pdfplumber
-spacy==3.0.0 
+spacy
+transformers
 scikit-learn
-pipeline
-cosine_similarity
 nltk
-stopwords
-en_core_web_sm
-
-python-3.x.x
+numpy
