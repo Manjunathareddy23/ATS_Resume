@@ -8,5 +8,5 @@ cosine_similarity
 nltk
 stopwords
 en_core_web_sm
-pip freeze > requirements.txt
+
 python-3.x.x
