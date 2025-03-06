@@ -53,23 +53,24 @@ def extract_text_from_pdf(file):
             text += page.extract_text()
         return text
     except Exception as e:
-        return f"Error reading PDF: {e}"
+        st.error(f"Error reading PDF: {e}")
+        return None
 
 # Function to generate HR/Placement Questions and Answers using Gemini API
 def generate_placement_questions_and_answers(resume_text, job_description):
     try:
         # Combine the resume text and job description for better context
-        combined_text = f"Resume: {resume_text}\nJob Description: {job_description}"
+        combined_text = f"Resume: {resume_text}\n\nJob Description: {job_description}"
         
         # Generating HR/Placement questions and answers using the Gemini API
-        response = genai.Completion.create(
+        response = genai.generate_text(
             model="gemini-1.5-pro",  # Ensure this model is available
             prompt=combined_text,  # The combined input text for better results
             max_tokens=500  # Adjust the token limit as required
         )
         
         # Return the generated response text
-        return response['text']
+        return response.get("text", "No text returned from Gemini API.")
     except Exception as e:
         st.error(f"API Request Error: {e}")
         return "Failed to generate HR/Placement questions and answers."
@@ -88,16 +89,18 @@ job_description = st.text_area("Paste Job Description", height=200)
 if resume_file and job_description:
     # Extract resume text
     resume_text = extract_text_from_pdf(resume_file)
-
-    # Match and generate HR/Placement questions and answers
-    generated_content = generate_placement_questions_and_answers(resume_text, job_description)
     
-    # Display Results
-    st.subheader("Generated HR/Placement Questions and Answers")
-    st.write(generated_content)
+    if resume_text is None:
+        st.error("There was an issue reading the resume.")
+    else:
+        # Match and generate HR/Placement questions and answers
+        generated_content = generate_placement_questions_and_answers(resume_text, job_description)
+        
+        # Display Results
+        st.subheader("Generated HR/Placement Questions and Answers")
+        st.write(generated_content)
 
 elif not resume_file:
     st.warning("❌ Please upload a resume file.")
 elif not job_description:
     st.warning("❌ Please enter a job description.")
-
