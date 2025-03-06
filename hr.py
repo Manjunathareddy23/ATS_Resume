@@ -57,10 +57,10 @@ def extract_text_from_pdf(file):
         return None
 
 # Function to generate HR/Placement Questions and Answers using Gemini API
-def generate_placement_questions_and_answers(resume_text, job_description):
+def generate_placement_questions_and_answers(resume_text, job_description, num_questions=5):
     try:
         # Combine the resume text and job description for better context
-        combined_text = f"Resume: {resume_text}\n\nJob Description: {job_description}"
+        combined_text = f"Resume: {resume_text}\n\nJob Description: {job_description}\n\nPlease generate {num_questions} HR/Placement questions based on the above content."
         
         # Generating HR/Placement questions and answers using the Gemini API
         response = genai.generate_text(
@@ -85,6 +85,9 @@ resume_file = st.file_uploader("Upload Resume (PDF)", type="pdf")
 # Job Description Input
 job_description = st.text_area("Paste Job Description", height=200)
 
+# Number of questions input
+num_questions = st.number_input("Number of Questions", min_value=1, value=5, step=1)
+
 # When both resume and job description are provided
 if resume_file and job_description:
     # Extract resume text
@@ -94,7 +97,7 @@ if resume_file and job_description:
         st.error("There was an issue reading the resume.")
     else:
         # Match and generate HR/Placement questions and answers
-        generated_content = generate_placement_questions_and_answers(resume_text, job_description)
+        generated_content = generate_placement_questions_and_answers(resume_text, job_description, num_questions)
         
         # Display Results
         st.subheader("Generated HR/Placement Questions and Answers")
