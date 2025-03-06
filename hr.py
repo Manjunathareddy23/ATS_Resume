@@ -1,5 +1,5 @@
 import streamlit as st
-import fitz  # PyMuPDF for extracting text from PDFs
+import pdfplumber  # PDF text extraction
 import google.generativeai as genai
 import os  # For environment variables
 from dotenv import load_dotenv  # To load .env file
@@ -16,12 +16,14 @@ if not GEMINI_API_KEY:
 else:
     genai.configure(api_key=GEMINI_API_KEY)
 
-# Function to extract text from PDF (Resume)
+# Function to extract text from PDF (using pdfplumber)
 def extract_text_from_pdf(pdf_file):
     try:
-        doc = fitz.open(stream=pdf_file.read(), filetype="pdf")
-        text = "\n".join(page.get_text("text") for page in doc)
-        return text.strip()
+        with pdfplumber.open(pdf_file) as pdf:
+            text = ""
+            for page in pdf.pages:
+                text += page.extract_text()
+            return text.strip()
     except Exception as e:
         return f"Error reading PDF: {e}"
 
