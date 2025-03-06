@@ -36,15 +36,15 @@ def generate_hr_questions(resume_text, job_description, num_questions):
     combined_text = f"Resume: {resume_text}\n\nJob Description: {job_description}\n\nPlease generate {num_questions} HR/Placement questions based on the above content."
     
     try:
-        # Call the Gemini API to generate questions based on the combined text
-        response = genai.generate_text(
+        # Use the correct method for generating text based on your current Gemini API SDK
+        response = genai.Completion.create(
             model="gemini-1.5-pro",  # Ensure this model is available
             prompt=combined_text,  # The combined input text for better results
             max_tokens=500  # Adjust the token limit as required
         )
         
         # Return the generated response text
-        return response.get("text", "No text returned from Gemini API.")
+        return response.get("choices", [{}])[0].get("text", "No text returned from Gemini API.")
     
     except Exception as e:
         return f"❌ Error generating questions: {e}"
