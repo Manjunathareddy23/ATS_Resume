@@ -58,14 +58,11 @@ def extract_text_from_pdf(file):
 # Function to extract skills using Gemini API
 def extract_skills_from_api(text):
     try:
-        # Initialize the GenerativeModel with the Gemini model
-        model = genai.GenerativeModel("gemini-1.5-pro")  # Use the correct model name
-        
         # Generate the response based on the resume or job description text
-        response = model.generate(text=text)  # Correct way to call the generation method
+        response = genai.text_generate(text=text)  # Correct way to call the API for text generation
         
         # Assuming the model returns a text response, we split the response into lines (skills)
-        return response.text.split("\n")
+        return response['text'].split("\n")
     except Exception as e:
         st.error(f"API Request Error: {e}")
         return []
@@ -84,12 +81,11 @@ def match_skills(resume_text, job_description):
 # Call Gemini API for HR/Placement Questions
 def generate_placement_questions(job_description):
     try:
-        model = genai.GenerativeModel("gemini-1.5-pro")  # Use the correct model name
         # Generate the response for HR/Placement questions based on the job description text
-        response = model.generate(text=job_description)  # Correct way to call the generation method
+        response = genai.text_generate(text=job_description)  # Correct method call
         
         # Assuming the model returns a list of questions as text (separated by newlines)
-        return response.text.split("\n")
+        return response['text'].split("\n")
     except Exception as e:
         st.error(f"API Request Error: {e}")
         return []
