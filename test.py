@@ -43,12 +43,22 @@ st.markdown("""
 
 # Extract Text from PDF
 def extract_text_from_pdf(file):
-    pdf_reader = PyPDF2.PdfReader(file)  # Use PyPDF2.PdfReader instead of PyPDF2.PdfFileReader
-    text = ""
-    for page_num in range(len(pdf_reader.pages)):
-        page = pdf_reader.pages[page_num]
-        text += page.extract_text()
-    return text
+    # Try to handle both versions of PyPDF2 (old and new)
+    try:
+        pdf_reader = PyPDF2.PdfReader(file)  # New version of PyPDF2 (2.x.x)
+        text = ""
+        for page_num in range(len(pdf_reader.pages)):
+            page = pdf_reader.pages[page_num]
+            text += page.extract_text()
+        return text
+    except AttributeError:
+        # Fallback to the old version (1.x.x)
+        pdf_reader = PyPDF2.PdfFileReader(file)
+        text = ""
+        for page_num in range(pdf_reader.getNumPages()):
+            page = pdf_reader.getPage(page_num)
+            text += page.extract_text()
+        return text
 
 # Function to extract skills using Gemini API
 def extract_skills_from_api(text):
