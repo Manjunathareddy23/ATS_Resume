@@ -1,8 +1,8 @@
 import streamlit as st
 import PyPDF2
-import requests
 import os
 from dotenv import load_dotenv
+import genai  # Assuming genai is the package that contains the GenerativeModel class
 
 # Load environment variables from .env file
 load_dotenv()
@@ -58,18 +58,17 @@ def extract_text_from_pdf(file):
             text += page.extract_text()
         return text
 
-# Function to extract skills using Gemini API
+# Function to extract skills using Gemini API (now using genai model)
 def extract_skills_from_api(text):
     try:
-        # Replace 'https://api.gemini.ai/actual-api-endpoint' with the correct API endpoint
-        response = requests.post(
-            "https://api.gemini.ai/your-correct-endpoint",  # Replace this with the real Gemini API endpoint
-            headers={"Authorization": f"Bearer {GEMINI_API_KEY}"},
-            json={"text": text}
-        )
-        response.raise_for_status()  # This will raise an error for bad status codes
-        return response.json().get("skills", [])
-    except requests.exceptions.RequestException as e:
+        # Initialize the GenerativeModel with the Gemini model
+        model = genai.GenerativeModel("gemini-1.5-pro", api_key=GEMINI_API_KEY)  # Use the correct model name
+        # Generate the response based on the resume or job description text
+        response = model.generate_content(prompt=text)
+
+        # Assuming the model returns a dictionary with a "skills" key
+        return response.get('skills', [])
+    except Exception as e:
         st.error(f"API Request Error: {e}")
         return []
 
@@ -84,20 +83,19 @@ def match_skills(resume_text, job_description):
 
     return matched_skills, missing_skills
 
-# Call Gemini API for HR/Placement Questions
+# Call Gemini API for HR/Placement Questions (now using genai model)
 def generate_placement_questions(job_description):
     try:
-        # Replace 'https://api.gemini.ai/actual-api-endpoint' with the correct API endpoint
-        response = requests.post(
-            "https://api.gemini.ai/your-correct-endpoint",  # Replace this with the real Gemini API endpoint
-            headers={"Authorization": f"Bearer {GEMINI_API_KEY}"},
-            json={"text": job_description}
-        )
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
+        # Initialize the GenerativeModel with the Gemini model
+        model = genai.GenerativeModel("gemini-1.5-pro", api_key=GEMINI_API_KEY)  # Use the correct model name
+        # Generate the response for HR/Placement questions based on the job description text
+        response = model.generate_content(prompt=job_description)
+
+        # Assuming the model returns a dictionary with a 'questions' key
+        return response.get('questions', [])
+    except Exception as e:
         st.error(f"API Request Error: {e}")
-        return {}
+        return []
 
 # Streamlit Layout
 st.title("Resume Job Fit Analyzer")
@@ -138,8 +136,8 @@ if resume_file and job_description:
     # HR/Placement Question Generation
     st.subheader("HR/Placement Questions")
     questions = generate_placement_questions(job_description)
-    if questions and 'questions' in questions:
-        for q in questions['questions']:
+    if questions:
+        for q in questions:
             st.write(f"- **{q['question']}**: {q['answer']}")
     else:
         st.write("No questions generated or API response is missing.")
