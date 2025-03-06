@@ -43,7 +43,6 @@ st.markdown("""
 
 # Extract Text from PDF
 def extract_text_from_pdf(file):
-    # Try to handle both versions of PyPDF2 (old and new)
     try:
         pdf_reader = PyPDF2.PdfReader(file)  # New version of PyPDF2 (2.x.x)
         text = ""
@@ -52,8 +51,7 @@ def extract_text_from_pdf(file):
             text += page.extract_text()
         return text
     except AttributeError:
-        # Fallback to the old version (1.x.x)
-        pdf_reader = PyPDF2.PdfFileReader(file)
+        pdf_reader = PyPDF2.PdfFileReader(file)  # Fallback for old version (1.x.x)
         text = ""
         for page_num in range(pdf_reader.getNumPages()):
             page = pdf_reader.getPage(page_num)
@@ -63,23 +61,23 @@ def extract_text_from_pdf(file):
 # Function to extract skills using Gemini API
 def extract_skills_from_api(text):
     try:
+        # Replace 'https://api.gemini.ai/actual-api-endpoint' with the correct API endpoint
         response = requests.post(
-            "https://api.gemini.ai/your-api-endpoint",  # Replace with Gemini API endpoint
-            headers={"Authorization": f"Bearer {GEMINI_API_KEY}"},  # Using the API key from environment variable
+            "https://api.gemini.ai/your-correct-endpoint",  # Replace this with the real Gemini API endpoint
+            headers={"Authorization": f"Bearer {GEMINI_API_KEY}"},
             json={"text": text}
         )
-        response.raise_for_status()
-        return response.json().get("skills", [])  # Assuming the response contains skills in a "skills" field
+        response.raise_for_status()  # This will raise an error for bad status codes
+        return response.json().get("skills", [])
     except requests.exceptions.RequestException as e:
         st.error(f"API Request Error: {e}")
         return []
 
 # Function to match skills using Gemini API results
 def match_skills(resume_text, job_description):
-    # Extract skills from both resume and job description using the Gemini API
     resume_skills = extract_skills_from_api(resume_text)
     job_skills = extract_skills_from_api(job_description)
-
+    
     # Calculate matched and missing skills
     matched_skills = set(resume_skills).intersection(job_skills)
     missing_skills = set(job_skills) - set(resume_skills)
@@ -89,19 +87,19 @@ def match_skills(resume_text, job_description):
 # Call Gemini API for HR/Placement Questions
 def generate_placement_questions(job_description):
     try:
+        # Replace 'https://api.gemini.ai/actual-api-endpoint' with the correct API endpoint
         response = requests.post(
-            "https://api.gemini.ai/your-api-endpoint",  # Replace with Gemini API endpoint
-            headers={"Authorization": f"Bearer {GEMINI_API_KEY}"},  # Using the API key from environment variable
+            "https://api.gemini.ai/your-correct-endpoint",  # Replace this with the real Gemini API endpoint
+            headers={"Authorization": f"Bearer {GEMINI_API_KEY}"},
             json={"text": job_description}
         )
-        response.raise_for_status()  # Ensure we handle HTTP errors
+        response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
         st.error(f"API Request Error: {e}")
         return {}
 
 # Streamlit Layout
-
 st.title("Resume Job Fit Analyzer")
 st.markdown("Upload your resume and input a job description to see how well you match.")
 
