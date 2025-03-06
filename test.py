@@ -60,11 +60,12 @@ def extract_skills_from_api(text):
     try:
         # Initialize the GenerativeModel with the Gemini model
         model = genai.GenerativeModel("gemini-1.5-pro")  # Use the correct model name
+        
         # Generate the response based on the resume or job description text
-        response = model.generate_content(prompt=text)
-
-        # Assuming the model returns a dictionary with a "skills" key
-        return response.text.split("\n")  # Parse skills from text if returned as such
+        response = model.generate(text=text)  # Correct way to call the generation method
+        
+        # Assuming the model returns a text response, we split the response into lines (skills)
+        return response.text.split("\n")
     except Exception as e:
         st.error(f"API Request Error: {e}")
         return []
@@ -85,9 +86,9 @@ def generate_placement_questions(job_description):
     try:
         model = genai.GenerativeModel("gemini-1.5-pro")  # Use the correct model name
         # Generate the response for HR/Placement questions based on the job description text
-        response = model.generate_content(prompt=job_description)
-
-        # Assuming the model returns a list of questions
+        response = model.generate(text=job_description)  # Correct way to call the generation method
+        
+        # Assuming the model returns a list of questions as text (separated by newlines)
         return response.text.split("\n")
     except Exception as e:
         st.error(f"API Request Error: {e}")
