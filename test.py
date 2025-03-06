@@ -17,8 +17,12 @@ if GEMINI_API_KEY is None:
     st.error("API key is not set. Please ensure the .env file contains the GEMINI_API_KEY.")
     st.stop()
 
-# Load spaCy model for NLP-based processing (optional for other uses)
-nlp = spacy.load('en_core_web_sm')
+# Ensure spaCy model is downloaded
+try:
+    nlp = spacy.load('en_core_web_sm')
+except OSError:
+    st.error("spaCy model 'en_core_web_sm' is not installed. Please install it using: python -m spacy download en_core_web_sm")
+    st.stop()
 
 # Streamlit Page Configurations
 st.set_page_config(page_title="Resume Analyzer", layout="centered")
