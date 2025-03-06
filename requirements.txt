@@ -1,6 +1,6 @@
 streamlit==1.19.0
 requests==2.28.1
 python-dotenv==0.20.0
-PyPDF2==1.26.0
+PyPDF2==2.0.0
 google-generativeai
 altair==4.2.0  # Added altair dependency
