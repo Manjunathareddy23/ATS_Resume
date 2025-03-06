@@ -58,15 +58,15 @@ def extract_text_from_pdf(file):
 # Function to extract skills using Gemini API
 def extract_skills_from_api(text):
     try:
-        # Correctly call the generate function with the appropriate parameters
-        response = genai.generate(
-            model="gemini-1.5-pro",  # Ensure this model exists and is valid
-            prompt=text,  # Provide the input text (resume or job description)
-            max_tokens=500  # Adjust this based on your requirements
+        # Generate the response based on the resume or job description text
+        response = genai.Completion.create(
+            model="gemini-1.5-pro",  # Use the correct model (ensure it's valid and available)
+            prompt=text,  # The input prompt (resume or job description)
+            max_tokens=500  # Adjust based on your requirements
         )
         
-        # Assuming the model returns a text response, we split the response into lines (skills)
-        return response['text'].split("\n")
+        # Extract the text content from the response
+        return response['choices'][0]['text'].split("\n")
     except Exception as e:
         st.error(f"API Request Error: {e}")
         return []
@@ -85,15 +85,15 @@ def match_skills(resume_text, job_description):
 # Call Gemini API for HR/Placement Questions
 def generate_placement_questions(job_description):
     try:
-        # Correctly call the generate function with the appropriate parameters for questions
-        response = genai.generate(
-            model="gemini-1.5-pro",  # Ensure this model exists and is valid
-            prompt=job_description,  # Provide the input job description
+        # Generate the response for HR/Placement questions based on the job description text
+        response = genai.Completion.create(
+            model="gemini-1.5-pro",  # Use the correct model (ensure it's valid and available)
+            prompt=job_description,  # The input job description
             max_tokens=500  # Adjust based on your requirements
         )
         
-        # Assuming the model returns a list of questions as text (separated by newlines)
-        return response['text'].split("\n")
+        # Extract the text content from the response
+        return response['choices'][0]['text'].split("\n")
     except Exception as e:
         st.error(f"API Request Error: {e}")
         return []
