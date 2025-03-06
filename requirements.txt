@@ -4,4 +4,5 @@ python-dotenv
 PyPDF2
 google-generativeai
 altair
+genai
 
