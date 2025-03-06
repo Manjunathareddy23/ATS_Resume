@@ -1,7 +1,5 @@
 streamlit
-pdfplumber
+PyPDF2
+requests
 spacy
-transformers
-scikit-learn
-nltk
-numpy
+generative
