@@ -43,10 +43,10 @@ st.markdown("""
 
 # Extract Text from PDF
 def extract_text_from_pdf(file):
-    pdf_reader = PyPDF2.PdfFileReader(file)
+    pdf_reader = PyPDF2.PdfReader(file)  # Use PyPDF2.PdfReader instead of PyPDF2.PdfFileReader
     text = ""
-    for page_num in range(pdf_reader.getNumPages()):
-        page = pdf_reader.getPage(page_num)
+    for page_num in range(len(pdf_reader.pages)):
+        page = pdf_reader.pages[page_num]
         text += page.extract_text()
     return text
 
