@@ -1,5 +1,4 @@
 streamlit
-PyPDF2
-python-dotenv
+pdfplumber
 google-generativeai
-fitz
+python-dotenv
