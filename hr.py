@@ -1,68 +1,40 @@
 import streamlit as st
-import PyPDF2
-import os
-from dotenv import load_dotenv
-import google.generativeai as genai  # Gemini API client
+import fitz  # PyMuPDF for extracting text from PDFs
+import google.generativeai as genai
+import os  # For environment variables
+from dotenv import load_dotenv  # To load .env file
 
 # Load environment variables from .env file
 load_dotenv()
 
-# Retrieve API key from environment variable
+# Get API key from environment variable
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-# Check if API key is loaded correctly
-if GEMINI_API_KEY is None:
+# Check if API key exists
+if not GEMINI_API_KEY:
     st.error("⚠️ Gemini API Key is missing! Set it as an environment variable.")
-    st.stop()
 else:
     genai.configure(api_key=GEMINI_API_KEY)
 
-# Streamlit Page Configurations
-st.set_page_config(page_title="Resume & Job Fit Analyzer", layout="centered")
-
-# CSS Styling
-st.markdown("""
-    <style>
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        .button {
-            font-size: 18px;
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        .button:hover {
-            background-color: #45a049;
-        }
-    </style>
-    """, unsafe_allow_html=True)
-
-# Helper Functions
-
-# Extract Text from PDF
-def extract_text_from_pdf(file):
+# Function to extract text from PDF
+def extract_text_from_pdf(pdf_file):
     try:
-        pdf_reader = PyPDF2.PdfReader(file)
-        text = ""
-        for page_num in range(len(pdf_reader.pages)):
-            page = pdf_reader.pages[page_num]
-            text += page.extract_text()
-        return text
+        doc = fitz.open(stream=pdf_file.read(), filetype="pdf")
+        text = "\n".join(page.get_text("text") for page in doc)
+        return text.strip()
     except Exception as e:
-        st.error(f"Error reading PDF: {e}")
-        return None
+        return f"Error reading PDF: {e}"
 
-# Function to generate HR/Placement Questions and Answers using Gemini API
-def generate_placement_questions_and_answers(resume_text, job_description, num_questions=5):
+# Function to generate HR/Placement questions using Gemini API
+def generate_hr_questions(resume_text, job_description, num_questions):
+    if not resume_text or not job_description:
+        return "❌ Please provide both resume text and job description."
+    
+    # Combine the resume text and job description for context
+    combined_text = f"Resume: {resume_text}\n\nJob Description: {job_description}\n\nPlease generate {num_questions} HR/Placement questions based on the above content."
+    
     try:
-        # Combine the resume text and job description for better context
-        combined_text = f"Resume: {resume_text}\n\nJob Description: {job_description}\n\nPlease generate {num_questions} HR/Placement questions based on the above content."
-        
-        # Generating HR/Placement questions and answers using the Gemini API
+        # Call the Gemini API to generate questions based on the combined text
         response = genai.generate_text(
             model="gemini-1.5-pro",  # Ensure this model is available
             prompt=combined_text,  # The combined input text for better results
@@ -71,39 +43,36 @@ def generate_placement_questions_and_answers(resume_text, job_description, num_q
         
         # Return the generated response text
         return response.get("text", "No text returned from Gemini API.")
+    
     except Exception as e:
-        st.error(f"API Request Error: {e}")
-        return "Failed to generate HR/Placement questions and answers."
+        return f"❌ Error generating questions: {e}"
 
-# Streamlit Layout
-st.title("Resume & Job Fit Analyzer")
-st.markdown("Upload your resume and paste the job description to see how well they match.")
+# Streamlit UI
+st.title("📘 AI-Based HR/Placement Question Generator")
+st.write("Upload your resume and paste the job description to generate HR/Placement questions.")
 
-# Resume Upload
-resume_file = st.file_uploader("Upload Resume (PDF)", type="pdf")
+# File uploader for resume
+resume_file = st.file_uploader("📂 Upload your Resume (PDF)", type=["pdf"])
 
-# Job Description Input
+# Text input for job description
 job_description = st.text_area("Paste Job Description", height=200)
 
-# Number of questions input
-num_questions = st.number_input("Number of Questions", min_value=1, value=5, step=1)
+# Number input for questions
+num_questions = st.number_input("🔢 Number of HR Questions", min_value=1, value=5)
 
-# When both resume and job description are provided
-if resume_file and job_description:
-    # Extract resume text
-    resume_text = extract_text_from_pdf(resume_file)
-    
-    if resume_text is None:
-        st.error("There was an issue reading the resume.")
-    else:
-        # Match and generate HR/Placement questions and answers
-        generated_content = generate_placement_questions_and_answers(resume_text, job_description, num_questions)
+# Generate button
+if st.button("🎯 Generate HR Questions"):
+    if resume_file and job_description:
+        # Extract resume text
+        resume_text = extract_text_from_pdf(resume_file)
         
-        # Display Results
-        st.subheader("Generated HR/Placement Questions and Answers")
-        st.write(generated_content)
-
-elif not resume_file:
-    st.warning("❌ Please upload a resume file.")
-elif not job_description:
-    st.warning("❌ Please enter a job description.")
+        if resume_text:
+            # Generate HR/Placement questions
+            with st.spinner("⏳ Generating HR/Placement Questions... Please wait!"):
+                hr_questions = generate_hr_questions(resume_text, job_description, num_questions)
+            st.subheader("📜 Generated HR/Placement Questions:")
+            st.write(hr_questions)
+        else:
+            st.error("❌ Unable to extract text from the uploaded resume.")
+    else:
+        st.error("❌ Please upload a resume and paste a job description.")
