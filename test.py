@@ -2,7 +2,20 @@ import streamlit as st
 import PyPDF2
 import requests
 import spacy
+import os
 from io import StringIO
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Retrieve API key from environment variable
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+# Check if API key is loaded correctly
+if GEMINI_API_KEY is None:
+    st.error("API key is not set. Please ensure the .env file contains the GEMINI_API_KEY.")
+    st.stop()
 
 # Load spaCy model for NLP-based processing (optional for other uses)
 nlp = spacy.load('en_core_web_sm')
@@ -47,7 +60,7 @@ def extract_skills_from_api(text):
     try:
         response = requests.post(
             "https://api.gemini.ai/your-api-endpoint",  # Replace with Gemini API endpoint
-            headers={"Authorization": "Bearer YOUR_API_KEY"},  # Replace with your Gemini API key
+            headers={"Authorization": f"Bearer {GEMINI_API_KEY}"},  # Using the API key from environment variable
             json={"text": text}
         )
         response.raise_for_status()
@@ -73,7 +86,7 @@ def generate_placement_questions(job_description):
     try:
         response = requests.post(
             "https://api.gemini.ai/your-api-endpoint",  # Replace with Gemini API endpoint
-            headers={"Authorization": "Bearer YOUR_API_KEY"},  # Replace with your Gemini API key
+            headers={"Authorization": f"Bearer {GEMINI_API_KEY}"},  # Using the API key from environment variable
             json={"text": job_description}
         )
         response.raise_for_status()  # Ensure we handle HTTP errors
