@@ -4,3 +4,5 @@ requests
 spacy
 google-generativeai 
 python-dotenv
+
+en-core-web-sm
