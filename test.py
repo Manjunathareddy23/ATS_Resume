@@ -2,7 +2,7 @@ import streamlit as st
 import PyPDF2
 import os
 from dotenv import load_dotenv
-import genai  # Assuming genai is the package that contains the GenerativeModel class
+import google.generativeai as genai  # Gemini API client
 
 # Load environment variables from .env file
 load_dotenv()
@@ -12,8 +12,10 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # Check if API key is loaded correctly
 if GEMINI_API_KEY is None:
-    st.error("API key is not set. Please ensure the .env file contains the GEMINI_API_KEY.")
+    st.error("⚠️ Gemini API Key is missing! Set it as an environment variable.")
     st.stop()
+else:
+    genai.configure(api_key=GEMINI_API_KEY)
 
 # Streamlit Page Configurations
 st.set_page_config(page_title="Resume Analyzer", layout="centered")
@@ -50,24 +52,19 @@ def extract_text_from_pdf(file):
             page = pdf_reader.pages[page_num]
             text += page.extract_text()
         return text
-    except AttributeError:
-        pdf_reader = PyPDF2.PdfFileReader(file)  # Fallback for old version (1.x.x)
-        text = ""
-        for page_num in range(pdf_reader.getNumPages()):
-            page = pdf_reader.getPage(page_num)
-            text += page.extract_text()
-        return text
+    except Exception as e:
+        return f"Error reading PDF: {e}"
 
-# Function to extract skills using Gemini API (now using genai model)
+# Function to extract skills using Gemini API
 def extract_skills_from_api(text):
     try:
         # Initialize the GenerativeModel with the Gemini model
-        model = genai.GenerativeModel("gemini-1.5-pro", api_key=GEMINI_API_KEY)  # Use the correct model name
+        model = genai.GenerativeModel("gemini-1.5-pro")  # Use the correct model name
         # Generate the response based on the resume or job description text
         response = model.generate_content(prompt=text)
 
         # Assuming the model returns a dictionary with a "skills" key
-        return response.get('skills', [])
+        return response.text.split("\n")  # Parse skills from text if returned as such
     except Exception as e:
         st.error(f"API Request Error: {e}")
         return []
@@ -83,16 +80,15 @@ def match_skills(resume_text, job_description):
 
     return matched_skills, missing_skills
 
-# Call Gemini API for HR/Placement Questions (now using genai model)
+# Call Gemini API for HR/Placement Questions
 def generate_placement_questions(job_description):
     try:
-        # Initialize the GenerativeModel with the Gemini model
-        model = genai.GenerativeModel("gemini-1.5-pro", api_key=GEMINI_API_KEY)  # Use the correct model name
+        model = genai.GenerativeModel("gemini-1.5-pro")  # Use the correct model name
         # Generate the response for HR/Placement questions based on the job description text
         response = model.generate_content(prompt=job_description)
 
-        # Assuming the model returns a dictionary with a 'questions' key
-        return response.get('questions', [])
+        # Assuming the model returns a list of questions
+        return response.text.split("\n")
     except Exception as e:
         st.error(f"API Request Error: {e}")
         return []
@@ -138,11 +134,11 @@ if resume_file and job_description:
     questions = generate_placement_questions(job_description)
     if questions:
         for q in questions:
-            st.write(f"- **{q['question']}**: {q['answer']}")
+            st.write(f"- **{q}**")
     else:
         st.write("No questions generated or API response is missing.")
 
 elif not resume_file:
-    st.warning("Please upload a resume file.")
+    st.warning("❌ Please upload a resume file.")
 elif not job_description:
-    st.warning("Please enter a job description.")
+    st.warning("❌ Please enter a job description.")
