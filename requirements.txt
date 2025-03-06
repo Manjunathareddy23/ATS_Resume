@@ -1,8 +1,6 @@
 streamlit
 PyPDF2
 requests
-spacy
 google-generativeai 
 python-dotenv
-
 en-core-web-sm
