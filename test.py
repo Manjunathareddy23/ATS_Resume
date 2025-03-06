@@ -59,7 +59,11 @@ def extract_text_from_pdf(file):
 def extract_skills_from_api(text):
     try:
         # Generate the response based on the resume or job description text
-        response = genai.text_generate(text=text)  # Correct way to call the API for text generation
+        response = genai.Completion.create(  # Correct method call
+            model="gemini-1.5-pro",  # Use the correct model (make sure this is valid)
+            prompt=text,  # The input prompt
+            max_tokens=500  # Adjust based on the length of your expected response
+        )
         
         # Assuming the model returns a text response, we split the response into lines (skills)
         return response['text'].split("\n")
@@ -82,7 +86,11 @@ def match_skills(resume_text, job_description):
 def generate_placement_questions(job_description):
     try:
         # Generate the response for HR/Placement questions based on the job description text
-        response = genai.text_generate(text=job_description)  # Correct method call
+        response = genai.Completion.create(  # Correct method call
+            model="gemini-1.5-pro",  # Use the correct model (make sure this is valid)
+            prompt=job_description,  # The input prompt
+            max_tokens=500  # Adjust based on the length of your expected response
+        )
         
         # Assuming the model returns a list of questions as text (separated by newlines)
         return response['text'].split("\n")
