@@ -2,77 +2,186 @@ from dotenv import load_dotenv
 import streamlit as st
 import os
 import fitz
-import google.generativeai as genai
+from google import genai
 
-# Load environment variables
+# ---------------- LOAD ENV ---------------- #
+
 load_dotenv()
 
-# Configure API Key
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+API_KEY = os.getenv("GOOGLE_API_KEY")
 
-# Function to generate response from Gemini API
-def get_gemini_response(input, pdf_content, prompt):
-    model = genai.GenerativeModel("gemini-1.5-flash")
-    response = model.generate_content([input, pdf_content, prompt])
-    return response.text
+if not API_KEY:
+    st.error("⚠️ GOOGLE_API_KEY not found!")
+    st.stop()
 
-# Function to extract text from PDF
+# ---------------- GEMINI CLIENT ---------------- #
+
+client = genai.Client(api_key=API_KEY)
+
+# ---------------- GEMINI RESPONSE ---------------- #
+
+def get_gemini_response(user_prompt, pdf_content, job_description):
+
+    try:
+
+        final_prompt = f"""
+        {user_prompt}
+
+        JOB DESCRIPTION:
+        {job_description}
+
+        RESUME CONTENT:
+        {pdf_content}
+        """
+
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=final_prompt
+        )
+
+        return response.text
+
+    except Exception as e:
+        return f"❌ Error: {e}"
+
+# ---------------- PDF TEXT EXTRACTION ---------------- #
+
 def input_pdf_setup(uploaded_file):
+
     if uploaded_file is not None:
-        document = fitz.open(stream=uploaded_file.read(), filetype="pdf")
-        text_parts = [page.get_text() for page in document]
-        return " ".join(text_parts)
+
+        document = fitz.open(
+            stream=uploaded_file.read(),
+            filetype="pdf"
+        )
+
+        text_parts = []
+
+        for page in document:
+            text_parts.append(page.get_text())
+
+        text = " ".join(text_parts)
+
+        # Prevent token overflow
+        return text[:7000]
+
     else:
-        raise FileNotFoundError("No file uploaded")
+        return ""
 
-# Streamlit App Configuration
-st.set_page_config(page_title="ATS Resume Expert")
+# ---------------- STREAMLIT CONFIG ---------------- #
 
-# Page Header
-st.header("ATS Tracking System")
-st.subheader("Paste Your Job Description & Upload Your Resume")
+st.set_page_config(
+    page_title="ATS Resume Expert",
+    page_icon="📄",
+    layout="centered"
+)
 
-# Input Fields
-input_text = st.text_area("Job Description: ")
-uploaded_file = st.file_uploader("Upload your Resume (PDF)...", type=["pdf"])
+# ---------------- UI ---------------- #
+
+st.title("📄 ATS Resume Expert")
+
+st.subheader(
+    "Paste Job Description & Upload Resume"
+)
+
+# Job Description
+input_text = st.text_area(
+    "📋 Job Description"
+)
+
+# Resume Upload
+uploaded_file = st.file_uploader(
+    "📂 Upload Resume (PDF)",
+    type=["pdf"]
+)
+
+# ---------------- PROCESS PDF ---------------- #
+
+pdf_content = ""
 
 if uploaded_file is not None:
-    st.write("✅ PDF Uploaded Successfully")
+
+    st.success("✅ PDF Uploaded Successfully")
+
     pdf_content = input_pdf_setup(uploaded_file)
-    
-    # Buttons to get ATS score and insights
-    if st.button("Get ATS Score"):
-        response = get_gemini_response("Provide an exact ATS match percentage (only the percentage).", pdf_content, input_text)
-        try:
-            score = float(response.strip().replace("%", ""))
-            st.subheader("📊 ATS Score")
-            st.write(f"**{score:.2f}%**")
-        except ValueError:
-            st.write("❌ Error: Unable to retrieve an exact percentage.")
-    
-    if st.button("Why is my score low?"):
-        response = get_gemini_response("Explain why the ATS match percentage is low.", pdf_content, input_text)
-        st.subheader("📉 Reasons for Low Score")
-        st.write(response)
-    
-    if st.button("Matched Skills"):
-        response = get_gemini_response("List the skills from the resume that match the job description.", pdf_content, input_text)
-        st.subheader("✅ Matched Skills")
-        st.write(response)
-    
-    if st.button("Missing Skills"):
-        response = get_gemini_response("List the skills missing in the resume compared to the job description.", pdf_content, input_text)
-        st.subheader("⚠️ Missing Skills")
-        st.write(response)
-    
-    if st.button("HR Questions"):
-        response = get_gemini_response("Generate interview questions based on the resume and job description.", pdf_content, input_text)
-        st.subheader("🎤 HR Interview Questions")
+
+# ---------------- BUTTONS ---------------- #
+
+if uploaded_file and input_text:
+
+    # ATS Score
+    if st.button("📊 Get ATS Score"):
+
+        response = get_gemini_response(
+            "Provide ATS match percentage only.",
+            pdf_content,
+            input_text
+        )
+
+        st.subheader("ATS Score")
+
         st.write(response)
 
-# Like & Dislike Counter
+    # Low Score Reason
+    if st.button("📉 Why is my score low?"):
+
+        response = get_gemini_response(
+            "Explain why the ATS score is low.",
+            pdf_content,
+            input_text
+        )
+
+        st.subheader("Reasons for Low Score")
+
+        st.write(response)
+
+    # Matched Skills
+    if st.button("✅ Matched Skills"):
+
+        response = get_gemini_response(
+            "List matched skills between resume and job description.",
+            pdf_content,
+            input_text
+        )
+
+        st.subheader("Matched Skills")
+
+        st.write(response)
+
+    # Missing Skills
+    if st.button("⚠️ Missing Skills"):
+
+        response = get_gemini_response(
+            "List missing skills in the resume compared to the job description.",
+            pdf_content,
+            input_text
+        )
+
+        st.subheader("Missing Skills")
+
+        st.write(response)
+
+    # HR Questions
+    if st.button("🎤 HR Interview Questions"):
+
+        response = get_gemini_response(
+            "Generate HR interview questions based on resume and job description.",
+            pdf_content,
+            input_text
+        )
+
+        st.subheader("HR Interview Questions")
+
+        st.write(response)
+
+else:
+    st.info("📌 Upload resume and enter job description.")
+
+# ---------------- LIKE / DISLIKE ---------------- #
+
 if "like_count" not in st.session_state:
     st.session_state.like_count = 0
+
 if "dislike_count" not in st.session_state:
     st.session_state.dislike_count = 0
 
@@ -81,17 +190,23 @@ col1, col2 = st.columns(2)
 with col1:
     if st.button("👍 Like"):
         st.session_state.like_count += 1
-st.write(f"**Likes: {st.session_state.like_count}**")
+
+    st.write(f"Likes: {st.session_state.like_count}")
 
 with col2:
     if st.button("👎 Dislike"):
         st.session_state.dislike_count += 1
-st.write(f"**Dislikes: {st.session_state.dislike_count}**")
 
-# Footer
-footer = """
----
-#### Developed By [Manjunathareddy]  
-*Let's Connect - 6300138360*
-"""
-st.markdown(footer, unsafe_allow_html=True)
+    st.write(f"Dislikes: {st.session_state.dislike_count}")
+
+# ---------------- FOOTER ---------------- #
+
+st.markdown("---")
+
+st.markdown(
+    "#### Developed By Manjunathareddy"
+)
+
+st.markdown(
+    "*Let's Connect - 6300138360*"
+)
