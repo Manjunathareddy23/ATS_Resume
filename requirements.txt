@@ -1,5 +1,4 @@
-streamlit
-google-generativeai
+streamlit 
+pymupdf 
 python-dotenv
-PyMuPDF
-pdf2image
+google-genai
